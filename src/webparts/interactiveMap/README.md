@@ -94,6 +94,7 @@ O modelo `IBrazilState` (uf, name, path) fica em `src/models/`, fora da pasta da
 | 0.1.0  | 2026-09-25 | Scaffold inicial (placeholder do Yeoman, sem funcionalidade própria) |
 | 0.1.0  | 2026-09-25 | F1: mapa SVG do Brasil renderizado com os 27 estados como regiões clicáveis |
 | 0.1.0  | 2026-09-25 | Título e subtítulo opcionais acima do mapa, configuráveis via property pane |
+| 0.1.0  | 2026-09-25 | Build de produção (`npm run build`) validado com sucesso: zero erros, zero warnings, `.sppkg` gerado; chaves de localização en-us/pt-br sincronizadas |
 
 ## Referências
 
