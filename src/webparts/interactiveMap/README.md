@@ -8,7 +8,7 @@ Web part de mapa interativo do Brasil (SVG), com os 27 estados como regiões cli
 |----|-----------------|--------|
 | F1 | Mapa SVG do Brasil | ✅ Feito |
 | — | Título e subtítulo opcionais acima do mapa (fora do backlog original, incluído junto ao F1) | ✅ Feito |
-| F2 | Sigla visível por estado | ⬜ Não iniciado |
+| F2 | Sigla visível por estado | ✅ Feito |
 | F3 | Cores do mapa configuráveis | ⬜ Não iniciado |
 | F4 | Cadastro de link obrigatório por estado | ⬜ Não iniciado |
 | F5 | Layout responsivo | ⬜ Não iniciado |
@@ -58,6 +58,13 @@ redirecionar o usuário para o link configurado.
 6. F6 — depende de F1 e F4 (link obrigatório precisa estar funcionando para testar o redirecionamento).
 7. F7 — depende de F1 e F6 (reaproveita a lógica de disparo já criada em F6).
 
+## Decisões técnicas — F2 (sigla por estado)
+
+- **Posicionamento da sigla:** cada estado tem um `centroid` pré-calculado (média dos pontos do contorno do path SVG) salvo em `BrazilMapData.ts`, usado para posicionar o `<text>` da sigla. Calculado uma vez com um script utilitário (não faz parte do build) a partir da geometria de cada estado — não é recalculado em runtime.
+- **Estados com callout:** Rio Grande do Norte, Paraíba, Pernambuco, Alagoas, Sergipe, Distrito Federal, Rio de Janeiro e Espírito Santo (8 estados) são pequenos ou ficam muito próximos de vizinhos no Nordeste, tornando a sigla ilegível ou sobreposta se colocada direto na região. Para esses, a sigla fica num círculo fora do mapa (`calloutPosition`, pré-calculado e fixo em `BrazilMapData.ts`), ligado ao centroide do estado por uma linha. RN/PB/PE/AL/SE ficam empilhados em uma coluna vertical junto à borda direita do mapa (ordenados de cima para baixo pela posição de cada estado, para as linhas não se cruzarem). Os outros 19 estados exibem a sigla direto sobre o centroide.
+- **Acessibilidade das siglas:** os elementos `<text>`/`<g>` de sigla e callout têm `aria-hidden="true"` — o nome completo de cada estado já é lido via `<title>` dentro do `<path>` (leitor de tela não deve anunciar a sigla duas vezes).
+- **Validação automatizada:** `BrazilMapData.test.ts` garante, a cada build, que os 27 estados têm UF/nome/path/centroide válidos e sem duplicidade — protege contra erro de dados passar despercebido.
+
 ## Propriedades (painel de propriedades)
 
 | Propriedade | Tipo | Obrigatória | Descrição |
@@ -76,10 +83,11 @@ components/
   InteractiveMap.module.scss    # estilos (cores do tema)
   IInteractiveMapProps.ts       # props do componente
   data/BrazilMapData.ts         # geometria dos 27 estados (extraída de um SVG MapSVG)
+  data/BrazilMapData.test.ts    # valida integridade dos dados dos 27 estados
 loc/                             # textos de interface (en-us, pt-br)
 ```
 
-O modelo `IBrazilState` (uf, name, path) fica em `src/models/`, fora da pasta da web part, para poder ser reaproveitado por serviços/hooks futuros (ex.: opções do property pane em F4).
+O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fica em `src/models/`, fora da pasta da web part, para poder ser reaproveitado por serviços/hooks futuros (ex.: opções do property pane em F4).
 
 ## Como usar
 
@@ -95,6 +103,10 @@ O modelo `IBrazilState` (uf, name, path) fica em `src/models/`, fora da pasta da
 | 0.1.0  | 2026-09-25 | F1: mapa SVG do Brasil renderizado com os 27 estados como regiões clicáveis |
 | 0.1.0  | 2026-09-25 | Título e subtítulo opcionais acima do mapa, configuráveis via property pane |
 | 0.1.0  | 2026-09-25 | Build de produção (`npm run build`) validado com sucesso: zero erros, zero warnings, `.sppkg` gerado; chaves de localização en-us/pt-br sincronizadas |
+| 0.1.0  | 2026-09-25 | F2: sigla (UF) visível em cada estado, com callout (círculo + linha) para os 5 estados menores (DF, SE, AL, RJ, ES) |
+| 0.1.0  | 2026-09-25 | Build de produção validado novamente após F2: zero erros, zero warnings, `.sppkg` gerado |
+| 0.1.0  | 2026-09-25 | F2 (ajuste): callout expandido para 8 estados (+ RN, PB, PE, que colidiam com AL/SE no Nordeste), fonte das siglas aumentada, e teste automatizado (`BrazilMapData.test.ts`) validando integridade dos dados dos 27 estados |
+| 0.1.0  | 2026-09-25 | Build de produção validado novamente após o ajuste: zero erros, zero warnings, 5/5 testes passando, `.sppkg` gerado |
 
 ## Referências
 

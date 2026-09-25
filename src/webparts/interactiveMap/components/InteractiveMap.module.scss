@@ -39,3 +39,44 @@
   fill: "[theme:themePrimary, default: #0078d4]";
   fill: var(--themePrimary);
 }
+
+// F2: UF label drawn directly over a state's centroid.
+.stateLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: "[theme:white, default: #ffffff]";
+  fill: var(--white);
+  pointer-events: none;
+  user-select: none;
+}
+
+// F2: callout used for states too small to fit the label inside their own shape.
+.callout {
+  pointer-events: none;
+}
+
+.calloutLine {
+  stroke: "[theme:neutralTertiary, default: #a19f9d]";
+  stroke: var(--neutralTertiary);
+  stroke-width: 0.75;
+}
+
+.calloutCircle {
+  fill: "[theme:white, default: #ffffff]";
+  fill: var(--white);
+  stroke: "[theme:neutralTertiary, default: #a19f9d]";
+  stroke: var(--neutralTertiary);
+  stroke-width: 0.75;
+}
+
+.calloutLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: "[theme:bodyText, default: #323130]";
+  fill: var(--bodyText);
+  user-select: none;
+}
