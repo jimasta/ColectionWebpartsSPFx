@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "colection-webparts-sp-fx-client-side-solution",
+    "id": "0ef061e0-1450-45a6-8692-b833d1343fd4",
+    "version": "0.1.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.23.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "ColectionWebpartsSPFx description"
+      },
+      "longDescription": {
+        "default": "ColectionWebpartsSPFx description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "colection-webparts-sp-fx Feature",
+        "description": "The feature that activates elements of the colection-webparts-sp-fx solution.",
+        "id": "20688888-7a2a-43b6-80a8-86e5cc33ce56",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/colection-webparts-sp-fx.sppkg"
+  }
+}

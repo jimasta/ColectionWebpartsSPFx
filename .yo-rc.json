@@ -1,0 +1,23 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "ColectionWebpartsSPFx",
+    "environment": "spo",
+    "packageManager": "npm",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "InteractiveMap",
+    "componentDescription": "Web part de mapa interativo",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.12.0",
+    "sdksVersions": {},
+    "version": "1.23.2",
+    "libraryName": "colection-webparts-sp-fx",
+    "libraryId": "0ef061e0-1450-45a6-8692-b833d1343fd4",
+    "solutionShortDescription": "ColectionWebpartsSPFx description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  }
+}
