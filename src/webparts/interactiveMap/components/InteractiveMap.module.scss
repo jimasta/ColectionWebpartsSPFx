@@ -27,6 +27,10 @@
   stroke: "[theme:white, default: #ffffff]";
   stroke: var(--white);
   stroke-width: 0.75;
+}
+
+// States without a callout: the shape itself is the click target.
+.clickable {
   cursor: pointer;
 
   &:hover {
@@ -52,7 +56,8 @@
   user-select: none;
 }
 
-// F2: callout used for states too small to fit the label inside their own shape.
+// F2: callout used for states too small to fit the label inside their own shape. Unlike the
+// direct-label states, here the circle (not the state shape) is the click target.
 .callout {
   pointer-events: none;
 }
@@ -69,6 +74,13 @@
   stroke: "[theme:neutralTertiary, default: #a19f9d]";
   stroke: var(--neutralTertiary);
   stroke-width: 0.75;
+  cursor: pointer;
+  pointer-events: auto;
+
+  &:hover {
+    fill: "[theme:themePrimary, default: #0078d4]";
+    fill: var(--themePrimary);
+  }
 }
 
 .calloutLabel {
@@ -79,4 +91,10 @@
   fill: "[theme:bodyText, default: #323130]";
   fill: var(--bodyText);
   user-select: none;
+}
+
+// When the callout circle is selected (dark fill), its label needs light text to stay legible.
+.calloutCircle.selected + .calloutLabel {
+  fill: "[theme:white, default: #ffffff]";
+  fill: var(--white);
 }

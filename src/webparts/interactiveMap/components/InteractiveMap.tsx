@@ -12,11 +12,14 @@ const CALLOUT_RADIUS = 12;
 /**
  * F1/F2 (docs/backlog/interactive-map.md): renders the Brazil SVG map with all 27 states as
  * clickable regions, each labeled with its UF. States large enough show the label directly
- * over their centroid; the 5 smallest states show it in a callout circle connected to the
- * state by a line, to stay readable. Also renders an optional title/subtitle configured via
- * the property pane. Colors (F3), per-state links (F4), the zoom animation before navigating
- * (F6) and keyboard activation (F7) are intentionally out of scope here and build on top of
- * this component in later branches.
+ * over their centroid and are clickable on their own shape; the 8 smallest/most crowded
+ * states show the label in a callout circle connected to the state by a line — for those,
+ * the callout circle is the clickable element instead of the (too small) state shape, since
+ * that's the only element with room for a comfortable click/tap target. Also renders an
+ * optional title/subtitle configured via the property pane. Colors (F3), per-state links
+ * (F4) and the zoom animation before navigating (F6) are intentionally out of scope here and
+ * build on top of this component in later branches; F7 (keyboard activation) will need to
+ * mirror this same click-target split (state shape vs. callout circle).
  */
 const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => {
   // Placeholder handler for F1: proves each state is an individually clickable/selectable
@@ -27,27 +30,60 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => 
     setSelectedUf(uf);
   };
 
+  const renderState = (state: IBrazilState): React.ReactElement => {
+    const isSelected = state.uf === selectedUf;
+    // States with a callout are too small/crowded for their own shape to be a usable click
+    // target — the callout circle (rendered separately, in renderLabel) is the click target
+    // for those instead, so the shape itself is purely visual here.
+    if (state.calloutPosition) {
+      return (
+        <path
+          key={state.uf}
+          d={state.path}
+          className={[styles.state, isSelected && styles.selected].filter(Boolean).join(' ')}
+          aria-hidden="true"
+        />
+      );
+    }
+
+    return (
+      <path
+        key={state.uf}
+        d={state.path}
+        className={[styles.state, styles.clickable, isSelected && styles.selected].filter(Boolean).join(' ')}
+        onClick={(): void => handleStateClick(state.uf)}
+      >
+        <title>{state.name}</title>
+      </path>
+    );
+  };
+
   const renderLabel = (state: IBrazilState): React.ReactElement => {
     if (state.calloutPosition) {
       return (
-        <g key={`${state.uf}-label`} className={styles.callout} aria-hidden="true">
+        <g key={`${state.uf}-label`} className={styles.callout}>
           <line
             x1={state.centroid.x}
             y1={state.centroid.y}
             x2={state.calloutPosition.x}
             y2={state.calloutPosition.y}
             className={styles.calloutLine}
+            aria-hidden="true"
           />
           <circle
             cx={state.calloutPosition.x}
             cy={state.calloutPosition.y}
             r={CALLOUT_RADIUS}
-            className={styles.calloutCircle}
-          />
+            className={[styles.calloutCircle, state.uf === selectedUf && styles.selected].filter(Boolean).join(' ')}
+            onClick={(): void => handleStateClick(state.uf)}
+          >
+            <title>{state.name}</title>
+          </circle>
           <text
             x={state.calloutPosition.x}
             y={state.calloutPosition.y}
             className={styles.calloutLabel}
+            aria-hidden="true"
           >
             {state.uf}
           </text>
@@ -79,16 +115,7 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => 
         aria-label={strings.MapAriaLabel}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {brazilStates.map((state) => (
-          <path
-            key={state.uf}
-            d={state.path}
-            className={state.uf === selectedUf ? `${styles.state} ${styles.selected}` : styles.state}
-            onClick={(): void => handleStateClick(state.uf)}
-          >
-            <title>{state.name}</title>
-          </path>
-        ))}
+        {brazilStates.map(renderState)}
         {brazilStates.map(renderLabel)}
       </svg>
     </section>
