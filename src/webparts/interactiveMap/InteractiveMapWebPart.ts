@@ -13,61 +13,30 @@ import InteractiveMap from './components/InteractiveMap';
 import { IInteractiveMapProps } from './components/IInteractiveMapProps';
 
 export interface IInteractiveMapWebPartProps {
-  description: string;
+  title?: string;
+  subtitle?: string;
+  // F3/F4 will add the map color and per-state link properties here.
 }
 
 export default class InteractiveMapWebPart extends BaseClientSideWebPart<IInteractiveMapWebPartProps> {
 
   private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
 
   public render(): void {
     const element: React.ReactElement<IInteractiveMapProps> = React.createElement(
       InteractiveMap,
       {
-        description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
-        environmentMessage: this._environmentMessage,
-        userDisplayName: this.context.pageContext.user.displayName
+        title: this.properties.title,
+        subtitle: this.properties.subtitle
       }
     );
 
     ReactDom.render(element, this.domElement);
   }
 
-  protected onInit(): Promise<void> {
-    return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
-    });
-  }
-
-
-
-  private _getEnvironmentMessage(): Promise<string> {
-    if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
-      return this.context.sdks.microsoftTeams.teamsJs.app.getContext()
-        .then(context => {
-          let environmentMessage: string = '';
-          switch (context.app.host.name) {
-            case 'Office': // running in Office
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
-              break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
-              break;
-            case 'Teams': // running in Teams
-            case 'TeamsModern':
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
-              break;
-            default:
-              environmentMessage = strings.UnknownEnvironment;
-          }
-
-          return environmentMessage;
-        });
-    }
-
-    return Promise.resolve(this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentSharePoint : strings.AppSharePointEnvironment);
+  protected async onInit(): Promise<void> {
+    await super.onInit();
   }
 
   protected onThemeChanged(currentTheme: IReadonlyTheme | undefined): void {
@@ -82,10 +51,13 @@ export default class InteractiveMapWebPart extends BaseClientSideWebPart<IIntera
 
     if (semanticColors) {
       this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
+      this.domElement.style.setProperty('--neutralSecondary', semanticColors.bodySubtext || null);
       this.domElement.style.setProperty('--link', semanticColors.link || null);
       this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
+      this.domElement.style.setProperty('--neutralTertiary', semanticColors.disabledText || null);
+      this.domElement.style.setProperty('--themePrimary', semanticColors.link || null);
+      this.domElement.style.setProperty('--white', semanticColors.bodyBackground || null);
     }
-
   }
 
   protected onDispose(): void {
@@ -107,8 +79,11 @@ export default class InteractiveMapWebPart extends BaseClientSideWebPart<IIntera
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
+                PropertyPaneTextField('title', {
+                  label: strings.TitleFieldLabel
+                }),
+                PropertyPaneTextField('subtitle', {
+                  label: strings.SubtitleFieldLabel
                 })
               ]
             }

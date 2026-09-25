@@ -36,3 +36,6 @@ obj
 
 # Styles Generated Code
 *.scss.ts
+
+# Documentação de uso pessoal (backlog, notas) — nunca vai para o GitHub
+docs/

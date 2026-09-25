@@ -4,9 +4,11 @@
 
 Solução SharePoint Framework (SPFx) com web parts em React e TypeScript.
 
-Web parts incluídas:
+## Web parts
 
-- **InteractiveMap** — scaffold inicial, ainda sem funcionalidade própria (placeholder gerado pelo Yeoman).
+| Web part | Descrição | Documentação |
+| --- | --- | --- |
+| InteractiveMap | Mapa interativo do Brasil (SVG), com os 27 estados como regiões clicáveis | [README](src/webparts/interactiveMap/README.md) |
 
 ## Versão do SharePoint Framework
 
@@ -21,7 +23,7 @@ Web parts incluídas:
 
 - Node.js 22 LTS (`>=22.14 <23`)
 - `heft trust-dev-cert` executado uma vez na máquina de desenvolvimento
-- Variável de ambiente `SPFX_SERVE_TENANT_DOMAIN` apontando para o site de testes (ex.: `bassarit.sharepoint.com/sites/Dev`)
+- Variável de ambiente `SPFX_SERVE_TENANT_DOMAIN` apontando para o site de testes (ex.: `<tenant>.sharepoint.com/sites/<site>`)
 
 ## Solução
 
@@ -34,6 +36,7 @@ Web parts incluídas:
 | Versão | Data       | Comentário                                                     |
 | ------ | ---------- | --------------------------------------------------------------- |
 | 0.1.0  | 2026-09-25 | Scaffold inicial da solução e da web part InteractiveMap (placeholder, sem funcionalidade própria ainda) |
+| 0.1.0  | 2026-09-25 | InteractiveMap: primeiras funcionalidades entregues — ver [histórico da web part](src/webparts/interactiveMap/README.md#histórico-de-versões) |
 
 ## Disclaimer
 
@@ -53,10 +56,6 @@ Web parts incluídas:
   ?debugManifestsFile=https://localhost:4321/temp/build/manifests.js&debug=true&noredir=true
   ```
   (o workbench hospedado `/_layouts/workbench.aspx` está descontinuado)
-
-## Features
-
-- [ ] InteractiveMap: mapa interativo configurável via property pane (ainda não implementado — web part atual é o placeholder do scaffold)
 
 ## Referências
 

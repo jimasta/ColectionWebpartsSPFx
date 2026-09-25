@@ -1,29 +1,41 @@
 .interactiveMap {
   overflow: hidden;
   padding: 1em;
+}
+
+.title {
+  margin: 0 0 0.25em;
   color: "[theme:bodyText, default: #323130]";
   color: var(--bodyText);
 }
 
-.welcome {
-  text-align: center;
+.subtitle {
+  margin: 0 0 1em;
+  color: "[theme:neutralSecondary, default: #605e5c]";
+  color: var(--neutralSecondary);
 }
 
-.welcomeImage {
+.map {
+  display: block;
   width: 100%;
-  max-width: 420px;
+  height: auto;
 }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
+.state {
+  fill: "[theme:neutralTertiary, default: #a19f9d]";
+  fill: var(--neutralTertiary);
+  stroke: "[theme:white, default: #ffffff]";
+  stroke: var(--white);
+  stroke-width: 0.75;
+  cursor: pointer;
 
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
+  &:hover {
+    fill: "[theme:themePrimary, default: #0078d4]";
+    fill: var(--themePrimary);
   }
+}
+
+.selected {
+  fill: "[theme:themePrimary, default: #0078d4]";
+  fill: var(--themePrimary);
 }

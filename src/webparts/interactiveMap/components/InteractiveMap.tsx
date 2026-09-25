@@ -1,44 +1,49 @@
 import * as React from 'react';
 import styles from './InteractiveMap.module.scss';
 import type { IInteractiveMapProps } from './IInteractiveMapProps';
-import { escape } from '@microsoft/sp-lodash-subset';
-import welcomeDark from '../assets/welcome-dark.png';
-import welcomeLight from '../assets/welcome-light.png';
+import { brazilStates, BRAZIL_MAP_VIEWBOX } from './data/BrazilMapData';
+import * as strings from 'InteractiveMapWebPartStrings';
 
-export default class InteractiveMap extends React.Component<IInteractiveMapProps> {
-  public render(): React.ReactElement<IInteractiveMapProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      userDisplayName
-    } = this.props;
+/**
+ * F1 (docs/backlog/interactive-map.md): renders the Brazil SVG map with all 27 states as
+ * clickable regions, plus an optional title/subtitle configured via the property pane.
+ * Colors (F3), per-state links (F4), the zoom animation before navigating (F6) and keyboard
+ * activation (F7) are intentionally out of scope here and build on top of this component in
+ * later branches.
+ */
+const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => {
+  // Placeholder handler for F1: proves each state is an individually clickable/selectable
+  // element. F6 will replace this with the zoom animation + navigation to the state's link.
+  const [selectedUf, setSelectedUf] = React.useState<string | undefined>(undefined);
 
-    return (
-      <section className={`${styles.interactiveMap}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? welcomeDark : welcomeLight} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
-    );
-  }
-}
+  const handleStateClick = (uf: string): void => {
+    setSelectedUf(uf);
+  };
+
+  return (
+    <section className={styles.interactiveMap}>
+      {title && <h2 className={styles.title}>{title}</h2>}
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+      <svg
+        className={styles.map}
+        viewBox={BRAZIL_MAP_VIEWBOX}
+        role="img"
+        aria-label={strings.MapAriaLabel}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {brazilStates.map((state) => (
+          <path
+            key={state.uf}
+            d={state.path}
+            className={state.uf === selectedUf ? `${styles.state} ${styles.selected}` : styles.state}
+            onClick={(): void => handleStateClick(state.uf)}
+          >
+            <title>{state.name}</title>
+          </path>
+        ))}
+      </svg>
+    </section>
+  );
+};
+
+export default InteractiveMap;
