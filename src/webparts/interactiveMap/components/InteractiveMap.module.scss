@@ -21,9 +21,12 @@
   height: auto;
 }
 
+// F3: --mapBaseColor / --mapHoverColor come from the property pane (set inline on the root
+// element by InteractiveMap.tsx). When unset they're absent, so every use below falls back to
+// the theme color — the same look the map had before F3.
 .state {
   fill: "[theme:neutralTertiary, default: #a19f9d]";
-  fill: var(--neutralTertiary);
+  fill: var(--mapBaseColor, var(--neutralTertiary));
   stroke: "[theme:white, default: #ffffff]";
   stroke: var(--white);
   stroke-width: 0.75;
@@ -35,23 +38,35 @@
 
   &:hover {
     fill: "[theme:themePrimary, default: #0078d4]";
-    fill: var(--themePrimary);
+    fill: var(--mapHoverColor, var(--themePrimary));
   }
 }
 
 .selected {
   fill: "[theme:themePrimary, default: #0078d4]";
-  fill: var(--themePrimary);
+  fill: var(--mapHoverColor, var(--themePrimary));
+}
+
+// Light text with a dark halo (paint-order: stroke draws the outline behind the glyphs). Both
+// colors come from the theme and always contrast with each other, so the label stays legible
+// over any fill — including a light base/hover color picked in the property pane (F3).
+%labelOnFill {
+  fill: "[theme:white, default: #ffffff]";
+  fill: var(--white);
+  stroke: "[theme:bodyText, default: #323130]";
+  stroke: var(--bodyText);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 
 // F2: UF label drawn directly over a state's centroid.
 .stateLabel {
+  @extend %labelOnFill;
   font-size: 12px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
-  fill: "[theme:white, default: #ffffff]";
-  fill: var(--white);
   pointer-events: none;
   user-select: none;
 }
@@ -64,7 +79,7 @@
 
 .calloutLine {
   stroke: "[theme:neutralTertiary, default: #a19f9d]";
-  stroke: var(--neutralTertiary);
+  stroke: var(--mapBaseColor, var(--neutralTertiary));
   stroke-width: 0.75;
 }
 
@@ -72,17 +87,18 @@
   fill: "[theme:white, default: #ffffff]";
   fill: var(--white);
   stroke: "[theme:neutralTertiary, default: #a19f9d]";
-  stroke: var(--neutralTertiary);
+  stroke: var(--mapBaseColor, var(--neutralTertiary));
   stroke-width: 0.75;
   cursor: pointer;
   pointer-events: auto;
 
   &:hover {
     fill: "[theme:themePrimary, default: #0078d4]";
-    fill: var(--themePrimary);
+    fill: var(--mapHoverColor, var(--themePrimary));
   }
 }
 
+// Dark text on the callout circle's light background.
 .calloutLabel {
   font-size: 10px;
   font-weight: 700;
@@ -93,8 +109,10 @@
   user-select: none;
 }
 
-// When the callout circle is selected (dark fill), its label needs light text to stay legible.
+// When the circle is filled with the hover color (hovered or selected), the label switches to
+// the same light-text-with-halo style as the state labels. The label sits right after the
+// circle in the DOM and has no pointer events, so hovering it still counts as hovering the circle.
+.calloutCircle:hover + .calloutLabel,
 .calloutCircle.selected + .calloutLabel {
-  fill: "[theme:white, default: #ffffff]";
-  fill: var(--white);
+  @extend %labelOnFill;
 }

@@ -9,7 +9,7 @@ Web part de mapa interativo do Brasil (SVG), com os 27 estados como regiões cli
 | F1 | Mapa SVG do Brasil | ✅ Feito |
 | — | Título e subtítulo opcionais acima do mapa (fora do backlog original, incluído junto ao F1) | ✅ Feito |
 | F2 | Sigla visível por estado | ✅ Feito |
-| F3 | Cores do mapa configuráveis | ⬜ Não iniciado |
+| F3 | Cores do mapa configuráveis | ✅ Feito |
 | F4 | Cadastro de link obrigatório por estado | ⬜ Não iniciado |
 | F5 | Layout responsivo | ⬜ Não iniciado |
 | F6 | Animação de zoom antes do redirecionamento | ⬜ Não iniciado |
@@ -66,6 +66,17 @@ redirecionar o usuário para o link configurado.
 - **Área clicável — callout vs. estado:** para os 8 estados com `calloutPosition`, o alvo de clique é o **círculo do callout**, não a própria região do estado no mapa (o `<path>` fica `aria-hidden` e sem `onClick`) — a região é pequena/apertada demais para ser um alvo de clique confiável. Para os outros 19 estados (sem `calloutPosition`), o alvo de clique é a **própria região do estado**. Essa regra vem diretamente do dado: `InteractiveMap.tsx` decide onde colocar o `onClick` checando se `state.calloutPosition` existe, não uma lista separada — não há como o componente e os dados divergirem nisso.
 - **Validação automatizada:** `BrazilMapData.test.ts` garante, a cada build, que os 27 estados têm UF/nome/path/centroide válidos, sem duplicidade, que o centroide de cada estado cai dentro do próprio bounding box (pegaria o bug do centroide fora da forma de Pará/Acre automaticamente), e que a lista de UFs com callout é exatamente a esperada (RN, PB, PE, AL, SE, DF, RJ, ES) — protege a regra de área clicável acima contra mudança acidental nos dados.
 
+## Decisões técnicas — F3 (cores configuráveis)
+
+- **Campo de cor:** `PropertyFieldColorPicker` do `@pnp/spfx-property-controls` (versão fixa `3.24.0`, a que declara compatibilidade com SPFx 1.23 e React 17.0.1). É carregado sob demanda em `loadPropertyPaneResources`, num chunk separado (`interactive-map-property-pane`, ~230 KB): quem só visualiza a página não baixa esse código, só quem abre o painel de propriedades.
+- **Padrão = tema:** as duas cores são opcionais. Enquanto não forem configuradas, o mapa usa as cores do tema do SharePoint (o mesmo visual de antes do F3). Por isso não há valor padrão no manifest nem mudança de `dataVersion`: páginas que já usavam a web part continuam iguais.
+- **Como a cor chega no mapa:** o componente expõe as cores como variáveis CSS (`--mapBaseColor`, `--mapHoverColor`) no elemento raiz, e o SCSS usa `var(--mapBaseColor, <cor do tema>)`. Cor não configurada = variável ausente = tema. A regra fica em `components/mapColors.ts`, coberta por `mapColors.test.ts`.
+- **Onde cada cor se aplica:** a cor dos estados preenche as regiões e também colore a linha e a borda dos callouts. A cor de destaque aparece no hover e na seleção, tanto nas regiões quanto nos círculos de callout.
+- **Seletor mostra a cor real:** sem cor configurada, o seletor abre já com a cor efetiva do tema, e não com um valor genérico que não corresponde ao que está na tela.
+- **Voltar ao tema:** o botão "Usar cores do tema" limpa as duas cores. Sem ele, depois de escolher uma cor não haveria como voltar ao padrão do tema. O botão fica desabilitado quando nenhuma cor está configurada.
+- **Contraste das siglas:** com uma cor clara escolhida no painel, a sigla branca ficaria ilegível. As siglas sobre regiões coloridas (e a sigla do callout quando o círculo está em hover/selecionado) usam texto claro com contorno escuro (`paint-order: stroke`), as duas cores vindas do tema, o que mantém a leitura sobre qualquer cor de fundo.
+- **Limitação conhecida:** o pacote PnP não traz tradução pt-br (só pt-pt). Em páginas em português, os textos internos do seletor de cor aparecem em inglês; os rótulos dos campos, que vêm das strings desta web part, continuam em pt-br.
+
 ## Propriedades (painel de propriedades)
 
 | Propriedade | Tipo | Obrigatória | Descrição |
@@ -73,7 +84,11 @@ redirecionar o usuário para o link configurado.
 | Título | Texto | Não | Exibido acima do mapa. Fica oculto se vazio. |
 | Subtítulo | Texto | Não | Exibido abaixo do título. Fica oculto se vazio. |
 
-Propriedades de F3 (cores) e F4 (links por estado) serão adicionadas aqui quando implementadas.
+| Cor dos estados | Cor | Não | Preenchimento dos estados, e linha/borda dos callouts. Sem valor, usa a cor do tema. |
+| Cor de destaque (hover e seleção) | Cor | Não | Cor do estado ou do callout ao passar o mouse e quando selecionado. Sem valor, usa a cor do tema. |
+| Usar cores do tema | Botão | — | Limpa as duas cores acima e volta ao padrão do tema. |
+
+Propriedades de F4 (links por estado) serão adicionadas aqui quando implementadas.
 
 ## Estrutura de código
 
@@ -85,6 +100,8 @@ components/
   IInteractiveMapProps.ts       # props do componente
   data/BrazilMapData.ts         # geometria dos 27 estados (extraída de um SVG MapSVG)
   data/BrazilMapData.test.ts    # valida integridade dos dados dos 27 estados
+  mapColors.ts                  # cores do painel -> variáveis CSS (fallback para o tema)
+  mapColors.test.ts             # garante o fallback para o tema quando não há cor configurada
 loc/                             # textos de interface (en-us, pt-br)
 ```
 
@@ -94,7 +111,8 @@ O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fic
 
 1. Adicionar a web part InteractiveMap a uma página.
 2. No painel de propriedades, preencher Título/Subtítulo (opcional).
-3. Demais configurações (cores, links por estado) ficarão disponíveis conforme F3/F4 forem implementados.
+3. Em **Cores**, escolher a cor dos estados e a cor de destaque (opcional). "Usar cores do tema" volta ao padrão.
+4. Links por estado ficarão disponíveis quando o F4 for implementado.
 
 ## Histórico de versões
 
@@ -114,6 +132,8 @@ O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fic
 | 0.1.0  | 2026-09-25 | Build de produção validado após o ajuste do callout do DF: zero erros, zero warnings, 6/6 testes passando, `.sppkg` gerado |
 | 0.1.0  | 2026-09-25 | Área clicável separada por tipo de estado: os 8 estados com callout ficam clicáveis no círculo do callout (não mais na região do estado), os outros 19 continuam clicáveis na própria região; teste garante que a lista de estados com callout é exatamente a esperada |
 | 0.1.0  | 2026-09-25 | Build de produção validado após o ajuste de área clicável: zero erros, zero warnings, 7/7 testes passando, `.sppkg` gerado |
+| 0.1.0  | 2026-09-25 | F3: cores configuráveis no painel de propriedades (cor dos estados e cor de destaque), com fallback para o tema quando não configuradas, botão "Usar cores do tema" e contorno nas siglas para manter o contraste sobre qualquer cor; seletor de cor do PnP carregado sob demanda |
+| 0.1.0  | 2026-09-25 | Build de produção validado após o F3: zero erros, zero warnings, 11/11 testes passando, `.sppkg` gerado; bundle principal com 80 KB e o seletor de cor em chunk separado |
 
 ## Referências
 

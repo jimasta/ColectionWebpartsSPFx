@@ -25,6 +25,16 @@ Solução SharePoint Framework (SPFx) com web parts em React e TypeScript.
 - `heft trust-dev-cert` executado uma vez na máquina de desenvolvimento
 - Variável de ambiente `SPFX_SERVE_TENANT_DOMAIN` apontando para o site de testes (ex.: `<tenant>.sharepoint.com/sites/<site>`)
 
+## Dependências de terceiros
+
+Além dos pacotes do SPFx, a solução usa:
+
+| Pacote | Versão | Usado por | Motivo |
+| --- | --- | --- | --- |
+| `@pnp/spfx-property-controls` | `3.24.0` (fixa) | InteractiveMap | Seletor de cor no painel de propriedades. Versão compatível com SPFx 1.23 e React 17.0.1; carregada sob demanda, só quando o painel é aberto. |
+
+Ao instalar, o pacote registra automaticamente as strings de localização dele em `config/config.json` (`PropertyControlStrings`). Essa entrada é necessária e não deve ser removida.
+
 ## Solução
 
 | Solução               | Autor(es)          |
@@ -37,6 +47,7 @@ Solução SharePoint Framework (SPFx) com web parts em React e TypeScript.
 | ------ | ---------- | --------------------------------------------------------------- |
 | 0.1.0  | 2026-09-25 | Scaffold inicial da solução e da web part InteractiveMap (placeholder, sem funcionalidade própria ainda) |
 | 0.1.0  | 2026-09-25 | InteractiveMap: primeiras funcionalidades entregues — ver [histórico da web part](src/webparts/interactiveMap/README.md#histórico-de-versões) |
+| 0.1.0  | 2026-09-25 | Adicionada a dependência `@pnp/spfx-property-controls` 3.24.0 (seletor de cor da InteractiveMap) |
 
 ## Disclaimer
 

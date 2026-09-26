@@ -3,6 +3,10 @@ declare interface IInteractiveMapWebPartStrings {
   BasicGroupName: string;
   TitleFieldLabel: string;
   SubtitleFieldLabel: string;
+  ColorsGroupName: string;
+  BaseColorFieldLabel: string;
+  HoverColorFieldLabel: string;
+  ResetColorsButtonLabel: string;
   MapAriaLabel: string;
 }
 

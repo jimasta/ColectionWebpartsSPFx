@@ -6,4 +6,9 @@ export interface IInteractiveMapProps {
   title?: string;
   /** Optional subtitle shown below the title. Same rules as `title`. */
   subtitle?: string;
+  /** F3: fill color of the states, as a CSS color. Falls back to the theme when unset. */
+  baseColor?: string;
+  /** F3: fill color on hover and for the selected state/callout. Falls back to the theme when
+   *  unset. */
+  hoverColor?: string;
 }

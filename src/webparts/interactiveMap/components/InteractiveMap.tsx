@@ -4,6 +4,7 @@ import type { IInteractiveMapProps } from './IInteractiveMapProps';
 import { brazilStates, BRAZIL_MAP_VIEWBOX } from './data/BrazilMapData';
 import * as strings from 'InteractiveMapWebPartStrings';
 import type { IBrazilState } from '../../../models/IBrazilState';
+import { getMapColorVariables } from './mapColors';
 
 // F2: radius of the callout circle used for states too small/crowded to fit their UF label
 // inside their own shape (RN, PB, PE, AL, SE, DF, RJ, ES — see BrazilMapData.ts).
@@ -16,12 +17,16 @@ const CALLOUT_RADIUS = 12;
  * states show the label in a callout circle connected to the state by a line — for those,
  * the callout circle is the clickable element instead of the (too small) state shape, since
  * that's the only element with room for a comfortable click/tap target. Also renders an
- * optional title/subtitle configured via the property pane. Colors (F3), per-state links
- * (F4) and the zoom animation before navigating (F6) are intentionally out of scope here and
- * build on top of this component in later branches; F7 (keyboard activation) will need to
- * mirror this same click-target split (state shape vs. callout circle).
+ * optional title/subtitle configured via the property pane.
+ *
+ * F3: the base and hover colors configured in the property pane are exposed as CSS variables
+ * on the root element; the stylesheet falls back to the theme colors when they're unset.
+ *
+ * Per-state links (F4) and the zoom animation before navigating (F6) are intentionally out of
+ * scope here and build on top of this component in later branches; F7 (keyboard activation)
+ * will need to mirror this same click-target split (state shape vs. callout circle).
  */
-const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => {
+const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseColor, hoverColor }) => {
   // Placeholder handler for F1: proves each state is an individually clickable/selectable
   // element. F6 will replace this with the zoom animation + navigation to the state's link.
   const [selectedUf, setSelectedUf] = React.useState<string | undefined>(undefined);
@@ -105,7 +110,7 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle }) => 
   };
 
   return (
-    <section className={styles.interactiveMap}>
+    <section className={styles.interactiveMap} style={getMapColorVariables(baseColor, hoverColor)}>
       {title && <h2 className={styles.title}>{title}</h2>}
       {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
       <svg
