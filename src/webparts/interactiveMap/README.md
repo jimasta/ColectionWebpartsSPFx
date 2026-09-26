@@ -2,6 +2,8 @@
 
 Web part de mapa interativo do Brasil (SVG), com os 27 estados como regiões clicáveis. Pensada para uso em intranet: cada estado tem sua sigla, cor configurável e um link de destino cadastrado no painel de propriedades. Ao clicar em um estado, uma animação de zoom antecede o redirecionamento.
 
+![Mapa interativo com cor personalizada e o estado de Mato Grosso destacado](assets/InteractiveMap.png)
+
 ## Status
 
 | Item | Funcionalidade | Status |
@@ -11,9 +13,11 @@ Web part de mapa interativo do Brasil (SVG), com os 27 estados como regiões cli
 | F2 | Sigla visível por estado | ✅ Feito |
 | F3 | Cores do mapa configuráveis | ✅ Feito |
 | F4 | Cadastro de link obrigatório por estado | ✅ Feito (inclui a navegação ao clicar) |
-| F5 | Layout responsivo | ⬜ Não iniciado |
+| F5 | Layout responsivo | ⏸️ Em pausa |
 | F6 | Animação de zoom antes do redirecionamento | ⬜ Não iniciado (a navegação já existe desde o F4; falta a animação antes dela) |
-| F7 | Acessibilidade por teclado | ⬜ Não iniciado |
+| F7 | Acessibilidade por teclado | ❌ Descartado |
+
+**Replanejamento (2026-09-25):** depois do F4, a próxima funcionalidade é o F6. O F5 ficou em pausa. O F7 foi descartado por decisão do dono do projeto: o mapa funciona com mouse e toque, mas não com teclado nem leitor de tela. As seções "Dependências" e "Ordem sugerida" abaixo são o planejamento original e continuam citando o F7 como referência histórica.
 
 ## Backlog
 
@@ -124,6 +128,7 @@ components/
   data/brazilRegions.ts         # regiões e seus estados (agrupa os campos de link no painel)
   data/brazilRegions.test.ts    # garante que os 27 estados estão em exatamente uma região
 loc/                             # textos de interface (en-us, pt-br)
+assets/InteractiveMap.png        # print usado neste README (não entra no pacote)
 ```
 
 O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fica em `src/models/`, fora da pasta da web part, para poder ser reaproveitado por serviços/hooks futuros (ex.: opções do property pane em F4).
@@ -159,6 +164,7 @@ O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fic
 | 0.1.0  | 2026-09-25 | F4: link obrigatório por estado em uma página "Links" do painel (agrupada por região), com validação de endereço; clique navega para o link (mesma aba ou nova aba, configurável), exceto no modo de edição; estados sem link não reagem ao clique; aviso de links pendentes no modo de edição, carregado sob demanda |
 | 0.1.0  | 2026-09-25 | Correção: callout selecionado agora usa a cor de destaque (antes continuava branco) |
 | 0.1.0  | 2026-09-25 | Build de produção validado após o F4: zero erros, zero warnings, 38/38 testes passando, `.sppkg` gerado; bundle principal com ~84 KB |
+| 0.1.0  | 2026-09-25 | README: print do mapa adicionado; replanejamento do backlog (F6 a seguir, F5 em pausa, F7 descartado) |
 
 ## Referências
 
