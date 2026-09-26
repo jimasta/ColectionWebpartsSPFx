@@ -15,6 +15,11 @@
   color: var(--neutralSecondary);
 }
 
+// F4: warning shown in edit mode while some state has no link.
+.missingLinks {
+  margin-bottom: 1em;
+}
+
 .map {
   display: block;
   width: 100%;
@@ -32,7 +37,9 @@
   stroke-width: 0.75;
 }
 
-// States without a callout: the shape itself is the click target.
+// Interactive element: a state shape (states without a callout) or a callout circle. In view
+// mode only states with a link get this class (F4), so a state without one shows no pointer
+// and no hover color.
 .clickable {
   cursor: pointer;
 
@@ -89,10 +96,12 @@
   stroke: "[theme:neutralTertiary, default: #a19f9d]";
   stroke: var(--mapBaseColor, var(--neutralTertiary));
   stroke-width: 0.75;
-  cursor: pointer;
+  // Catches the click even when the circle isn't interactive, so it never falls through to the
+  // state underneath (DF's callout sits on top of Goiás).
   pointer-events: auto;
 
-  &:hover {
+  // Needs the extra class to beat the white fill above; a plain .selected loses to it.
+  &.selected {
     fill: "[theme:themePrimary, default: #0078d4]";
     fill: var(--mapHoverColor, var(--themePrimary));
   }
@@ -112,7 +121,7 @@
 // When the circle is filled with the hover color (hovered or selected), the label switches to
 // the same light-text-with-halo style as the state labels. The label sits right after the
 // circle in the DOM and has no pointer events, so hovering it still counts as hovering the circle.
-.calloutCircle:hover + .calloutLabel,
+.calloutCircle.clickable:hover + .calloutLabel,
 .calloutCircle.selected + .calloutLabel {
   @extend %labelOnFill;
 }

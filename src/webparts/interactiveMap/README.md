@@ -10,9 +10,9 @@ Web part de mapa interativo do Brasil (SVG), com os 27 estados como regiões cli
 | — | Título e subtítulo opcionais acima do mapa (fora do backlog original, incluído junto ao F1) | ✅ Feito |
 | F2 | Sigla visível por estado | ✅ Feito |
 | F3 | Cores do mapa configuráveis | ✅ Feito |
-| F4 | Cadastro de link obrigatório por estado | ⬜ Não iniciado |
+| F4 | Cadastro de link obrigatório por estado | ✅ Feito (inclui a navegação ao clicar) |
 | F5 | Layout responsivo | ⬜ Não iniciado |
-| F6 | Animação de zoom antes do redirecionamento | ⬜ Não iniciado |
+| F6 | Animação de zoom antes do redirecionamento | ⬜ Não iniciado (a navegação já existe desde o F4; falta a animação antes dela) |
 | F7 | Acessibilidade por teclado | ⬜ Não iniciado |
 
 ## Backlog
@@ -77,6 +77,17 @@ redirecionar o usuário para o link configurado.
 - **Contraste das siglas:** com uma cor clara escolhida no painel, a sigla branca ficaria ilegível. As siglas sobre regiões coloridas (e a sigla do callout quando o círculo está em hover/selecionado) usam texto claro com contorno escuro (`paint-order: stroke`), as duas cores vindas do tema, o que mantém a leitura sobre qualquer cor de fundo.
 - **Limitação conhecida:** o pacote PnP não traz tradução pt-br (só pt-pt). Em páginas em português, os textos internos do seletor de cor aparecem em inglês; os rótulos dos campos, que vêm das strings desta web part, continuam em pt-br.
 
+## Decisões técnicas — F4 (links por estado)
+
+- **Cadastro:** o painel de propriedades ganhou uma segunda página, "Links", com um campo de URL por estado, agrupados por região (Norte, Nordeste, Centro-Oeste, Sudeste, Sul — definidas em `components/data/brazilRegions.ts`). Os links ficam num único objeto `stateLinks` indexado pela UF (`stateLinks.SP`, `stateLinks.RJ`...), em vez de 27 propriedades soltas; o SPFx grava caminhos aninhados do painel com `lodash.update`, então isso funciona nativamente.
+- **Endereços aceitos:** `https://` ou `http://` absoluto, ou caminho do próprio tenant começando com `/` (ex.: `/sites/rh/SitePages/sp.aspx`). Qualquer outro esquema (`javascript:`, `mailto:`, `ftp:`...) e endereços que levam a outro site disfarçados de caminho (`//host`, `/\host`) são recusados, porque o link é aberto no clique. As regras ficam em `components/stateLinks.ts`, cobertas por `stateLinks.test.ts`.
+- **Obrigatório, mas sem bloquear a página:** o SPFx não consegue impedir a publicação da página com campos vazios. O campo vazio ou inválido mostra erro no painel e não é gravado. No modo de edição, um aviso lista os estados ainda sem link, com botão que abre o painel. Para quem visualiza a página, um estado sem link válido aparece normal no mapa, mas sem cursor de mão, sem cor de hover e sem reação ao clique.
+- **Navegação:** o clique abre o link na mesma aba; o interruptor "Abrir links em nova aba" muda para nova aba (com `noopener`). A navegação já faz parte do F4 para a funcionalidade ser testável de ponta a ponta; o F6 vai só acrescentar a animação de zoom antes dela.
+- **Sem navegação no modo de edição:** enquanto a página está sendo editada, o clique só destaca o estado. Navegar tiraria o autor da página no meio da edição.
+- **Link validado duas vezes:** o painel não grava link inválido, e o mapa ainda confere o link antes de navegar, o que cobre dados antigos ou alterados fora do painel.
+- **Bundle:** o aviso do modo de edição usa o `MessageBar` do Fluent UI e é carregado sob demanda (`React.lazy`, chunk `interactive-map-edit-warning`). Importado direto, ele levava o bundle principal de 80 KB para 285 KB, pago por todo visitante da página por algo que só autores veem. Com o carregamento sob demanda, o bundle principal ficou em ~84 KB.
+- **Correção junto com o F4:** um callout selecionado não mudava de cor (a regra do círculo branco vencia a de seleção por vir depois no CSS). Agora o círculo selecionado usa a cor de destaque, como as regiões.
+
 ## Propriedades (painel de propriedades)
 
 | Propriedade | Tipo | Obrigatória | Descrição |
@@ -88,7 +99,12 @@ redirecionar o usuário para o link configurado.
 | Cor de destaque (hover e seleção) | Cor | Não | Cor do estado ou do callout ao passar o mouse e quando selecionado. Sem valor, usa a cor do tema. |
 | Usar cores do tema | Botão | — | Limpa as duas cores acima e volta ao padrão do tema. |
 
-Propriedades de F4 (links por estado) serão adicionadas aqui quando implementadas.
+Página **Links**:
+
+| Propriedade | Tipo | Obrigatória | Descrição |
+|---|---|---|---|
+| Abrir links em nova aba | Sim/Não | Não | Desligado (padrão): o link abre na mesma aba. Ligado: abre em nova aba. |
+| Um campo por estado (27), agrupados por região | Texto (URL) | Sim | Link de destino do estado: `https://...`, `http://...` ou caminho do tenant começando com `/`. Valor vazio ou inválido mostra erro e não é gravado. |
 
 ## Estrutura de código
 
@@ -102,6 +118,11 @@ components/
   data/BrazilMapData.test.ts    # valida integridade dos dados dos 27 estados
   mapColors.ts                  # cores do painel -> variáveis CSS (fallback para o tema)
   mapColors.test.ts             # garante o fallback para o tema quando não há cor configurada
+  stateLinks.ts                 # validação e resolução dos links dos estados
+  stateLinks.test.ts            # endereços aceitos/recusados, estados sem link
+  MissingLinksWarning.tsx       # aviso de links pendentes (modo de edição, carregado sob demanda)
+  data/brazilRegions.ts         # regiões e seus estados (agrupa os campos de link no painel)
+  data/brazilRegions.test.ts    # garante que os 27 estados estão em exatamente uma região
 loc/                             # textos de interface (en-us, pt-br)
 ```
 
@@ -112,7 +133,8 @@ O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fic
 1. Adicionar a web part InteractiveMap a uma página.
 2. No painel de propriedades, preencher Título/Subtítulo (opcional).
 3. Em **Cores**, escolher a cor dos estados e a cor de destaque (opcional). "Usar cores do tema" volta ao padrão.
-4. Links por estado ficarão disponíveis quando o F4 for implementado.
+4. Na página **Links** do painel, informar o link de cada estado (todos obrigatórios) e, se quiser, ligar "Abrir links em nova aba". Enquanto faltar algum link, o modo de edição mostra um aviso com os estados pendentes.
+5. Publicar a página: quem visualiza clica no estado (ou no círculo do callout, nos estados pequenos) e vai para o link configurado.
 
 ## Histórico de versões
 
@@ -134,6 +156,9 @@ O modelo `IBrazilState` (uf, name, path, centroid, calloutPosition opcional) fic
 | 0.1.0  | 2026-09-25 | Build de produção validado após o ajuste de área clicável: zero erros, zero warnings, 7/7 testes passando, `.sppkg` gerado |
 | 0.1.0  | 2026-09-25 | F3: cores configuráveis no painel de propriedades (cor dos estados e cor de destaque), com fallback para o tema quando não configuradas, botão "Usar cores do tema" e contorno nas siglas para manter o contraste sobre qualquer cor; seletor de cor do PnP carregado sob demanda |
 | 0.1.0  | 2026-09-25 | Build de produção validado após o F3: zero erros, zero warnings, 11/11 testes passando, `.sppkg` gerado; bundle principal com 80 KB e o seletor de cor em chunk separado |
+| 0.1.0  | 2026-09-25 | F4: link obrigatório por estado em uma página "Links" do painel (agrupada por região), com validação de endereço; clique navega para o link (mesma aba ou nova aba, configurável), exceto no modo de edição; estados sem link não reagem ao clique; aviso de links pendentes no modo de edição, carregado sob demanda |
+| 0.1.0  | 2026-09-25 | Correção: callout selecionado agora usa a cor de destaque (antes continuava branco) |
+| 0.1.0  | 2026-09-25 | Build de produção validado após o F4: zero erros, zero warnings, 38/38 testes passando, `.sppkg` gerado; bundle principal com ~84 KB |
 
 ## Referências
 

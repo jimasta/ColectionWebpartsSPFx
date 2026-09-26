@@ -5,10 +5,27 @@ import { brazilStates, BRAZIL_MAP_VIEWBOX } from './data/BrazilMapData';
 import * as strings from 'InteractiveMapWebPartStrings';
 import type { IBrazilState } from '../../../models/IBrazilState';
 import { getMapColorVariables } from './mapColors';
+import { getUfsWithoutLink, resolveStateLink } from './stateLinks';
 
 // F2: radius of the callout circle used for states too small/crowded to fit their UF label
 // inside their own shape (RN, PB, PE, AL, SE, DF, RJ, ES — see BrazilMapData.ts).
 const CALLOUT_RADIUS = 12;
+
+const ALL_UFS: readonly string[] = brazilStates.map((state) => state.uf);
+
+// Edit-mode only, so it's loaded on demand and its Fluent UI code stays out of the bundle every
+// page visitor downloads.
+const MissingLinksWarning = React.lazy(
+  () => import(/* webpackChunkName: 'interactive-map-edit-warning' */ './MissingLinksWarning')
+);
+
+function openLink(url: string, newTab: boolean): void {
+  if (newTab) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    window.location.assign(url);
+  }
+}
 
 /**
  * F1/F2 (docs/backlog/interactive-map.md): renders the Brazil SVG map with all 27 states as
@@ -22,17 +39,42 @@ const CALLOUT_RADIUS = 12;
  * F3: the base and hover colors configured in the property pane are exposed as CSS variables
  * on the root element; the stylesheet falls back to the theme colors when they're unset.
  *
- * Per-state links (F4) and the zoom animation before navigating (F6) are intentionally out of
- * scope here and build on top of this component in later branches; F7 (keyboard activation)
- * will need to mirror this same click-target split (state shape vs. callout circle).
+ * F4: clicking a state navigates to its configured link (same tab, or a new one if configured).
+ * In view mode, a state without a valid link doesn't react to clicks; in edit mode clicks only
+ * highlight the state — navigating away would drop the author's unsaved changes — and a warning
+ * lists the states still missing a link.
+ *
+ * The zoom animation before navigating (F6) will run right before `openLink`; F7 (keyboard
+ * activation) will need to mirror the same click-target split (state shape vs. callout circle).
  */
-const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseColor, hoverColor }) => {
-  // Placeholder handler for F1: proves each state is an individually clickable/selectable
-  // element. F6 will replace this with the zoom animation + navigation to the state's link.
+const InteractiveMap: React.FC<IInteractiveMapProps> = ({
+  isEditMode,
+  title,
+  subtitle,
+  baseColor,
+  hoverColor,
+  stateLinks,
+  openLinksInNewTab,
+  onConfigureLinks
+}) => {
   const [selectedUf, setSelectedUf] = React.useState<string | undefined>(undefined);
+
+  // Not memoized on purpose: SPFx updates the web part properties in place, so `stateLinks`
+  // keeps the same object reference after an edit in the property pane. It's 27 cheap checks.
+  const ufsWithoutLink = getUfsWithoutLink(stateLinks, ALL_UFS);
+
+  const isInteractive = (uf: string): boolean =>
+    isEditMode || resolveStateLink(stateLinks, uf) !== undefined;
 
   const handleStateClick = (uf: string): void => {
     setSelectedUf(uf);
+    if (isEditMode) {
+      return;
+    }
+    const link = resolveStateLink(stateLinks, uf);
+    if (link) {
+      openLink(link, openLinksInNewTab === true);
+    }
   };
 
   const renderState = (state: IBrazilState): React.ReactElement => {
@@ -51,12 +93,15 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseC
       );
     }
 
+    const interactive = isInteractive(state.uf);
     return (
       <path
         key={state.uf}
         d={state.path}
-        className={[styles.state, styles.clickable, isSelected && styles.selected].filter(Boolean).join(' ')}
-        onClick={(): void => handleStateClick(state.uf)}
+        className={[styles.state, interactive && styles.clickable, isSelected && styles.selected]
+          .filter(Boolean)
+          .join(' ')}
+        onClick={interactive ? (): void => handleStateClick(state.uf) : undefined}
       >
         <title>{state.name}</title>
       </path>
@@ -65,6 +110,7 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseC
 
   const renderLabel = (state: IBrazilState): React.ReactElement => {
     if (state.calloutPosition) {
+      const interactive = isInteractive(state.uf);
       return (
         <g key={`${state.uf}-label`} className={styles.callout}>
           <line
@@ -79,8 +125,14 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseC
             cx={state.calloutPosition.x}
             cy={state.calloutPosition.y}
             r={CALLOUT_RADIUS}
-            className={[styles.calloutCircle, state.uf === selectedUf && styles.selected].filter(Boolean).join(' ')}
-            onClick={(): void => handleStateClick(state.uf)}
+            className={[
+              styles.calloutCircle,
+              interactive && styles.clickable,
+              state.uf === selectedUf && styles.selected
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={interactive ? (): void => handleStateClick(state.uf) : undefined}
           >
             <title>{state.name}</title>
           </circle>
@@ -111,6 +163,11 @@ const InteractiveMap: React.FC<IInteractiveMapProps> = ({ title, subtitle, baseC
 
   return (
     <section className={styles.interactiveMap} style={getMapColorVariables(baseColor, hoverColor)}>
+      {isEditMode && ufsWithoutLink.length > 0 && (
+        <React.Suspense fallback={null}>
+          <MissingLinksWarning ufs={ufsWithoutLink} onConfigure={onConfigureLinks} />
+        </React.Suspense>
+      )}
       {title && <h2 className={styles.title}>{title}</h2>}
       {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
       <svg

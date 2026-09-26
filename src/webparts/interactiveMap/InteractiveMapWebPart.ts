@@ -1,12 +1,14 @@
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
-import { Version } from '@microsoft/sp-core-library';
+import { DisplayMode, Version } from '@microsoft/sp-core-library';
 import {
   type IPropertyPaneConfiguration,
   type IPropertyPaneField,
+  type IPropertyPaneGroup,
   PropertyPaneButton,
   PropertyPaneButtonType,
-  PropertyPaneTextField
+  PropertyPaneTextField,
+  PropertyPaneToggle
 } from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
@@ -14,6 +16,10 @@ import { IReadonlyTheme } from '@microsoft/sp-component-base';
 import * as strings from 'InteractiveMapWebPartStrings';
 import InteractiveMap from './components/InteractiveMap';
 import { IInteractiveMapProps } from './components/IInteractiveMapProps';
+import { brazilStates } from './components/data/BrazilMapData';
+import { type BrazilRegionKey, brazilRegions } from './components/data/brazilRegions';
+import { getStateLinkError, type IStateLinkMessages } from './components/stateLinks';
+import type { IStateLinks } from '../../models/IStateLinks';
 
 type ColorPickerModule = typeof import('@pnp/spfx-property-controls/lib/PropertyFieldColorPicker');
 
@@ -24,7 +30,11 @@ export interface IInteractiveMapWebPartProps {
   baseColor?: string;
   /** F3: fill color on hover and for the selected state. Unset means "use the theme". */
   hoverColor?: string;
-  // F4 will add the per-state link properties here.
+  /** F4: destination link of each state, keyed by UF. Edited in the property pane through the
+   *  nested paths "stateLinks.AC", "stateLinks.AL", ... */
+  stateLinks?: IStateLinks;
+  /** F4: open the state links in a new tab. Unset means the current tab. */
+  openLinksInNewTab?: boolean;
 }
 
 export default class InteractiveMapWebPart extends BaseClientSideWebPart<IInteractiveMapWebPartProps> {
@@ -42,10 +52,14 @@ export default class InteractiveMapWebPart extends BaseClientSideWebPart<IIntera
       InteractiveMap,
       {
         isDarkTheme: this._isDarkTheme,
+        isEditMode: this.displayMode === DisplayMode.Edit,
         title: this.properties.title,
         subtitle: this.properties.subtitle,
         baseColor: this.properties.baseColor,
-        hoverColor: this.properties.hoverColor
+        hoverColor: this.properties.hoverColor,
+        stateLinks: this.properties.stateLinks,
+        openLinksInNewTab: this.properties.openLinksInNewTab,
+        onConfigureLinks: (): void => this.context.propertyPane.open()
       }
     );
 
@@ -119,9 +133,57 @@ export default class InteractiveMapWebPart extends BaseClientSideWebPart<IIntera
               groupFields: this._getColorFields()
             }
           ]
+        },
+        {
+          header: {
+            description: strings.LinksPageDescription
+          },
+          groups: [
+            {
+              groupName: strings.NavigationGroupName,
+              groupFields: [
+                PropertyPaneToggle('openLinksInNewTab', {
+                  label: strings.OpenInNewTabLabel,
+                  onText: strings.ToggleOnText,
+                  offText: strings.ToggleOffText
+                })
+              ]
+            },
+            ...this._getLinkGroups()
+          ]
         }
       ]
     };
+  }
+
+  /** F4: one group per region, one link field per state (all mandatory). */
+  private _getLinkGroups(): IPropertyPaneGroup[] {
+    const regionNames: Record<BrazilRegionKey, string> = {
+      north: strings.RegionNorth,
+      northeast: strings.RegionNortheast,
+      centralWest: strings.RegionCentralWest,
+      southeast: strings.RegionSoutheast,
+      south: strings.RegionSouth
+    };
+    const stateNames = new Map(brazilStates.map((state) => [state.uf, state.name] as [string, string]));
+    const messages: IStateLinkMessages = {
+      required: strings.LinkRequiredError,
+      invalid: strings.LinkInvalidError
+    };
+
+    return brazilRegions.map((region) => ({
+      groupName: regionNames[region.key],
+      groupFields: region.ufs.map((uf) =>
+        PropertyPaneTextField(`stateLinks.${uf}`, {
+          label: `${stateNames.get(uf)} (${uf})`,
+          placeholder: strings.LinkPlaceholder,
+          // An invalid value is not saved by SPFx, so stored links are always valid (the map
+          // still re-validates them before navigating).
+          onGetErrorMessage: (value: string): string => getStateLinkError(value, messages),
+          deferredValidationTime: 500
+        })
+      )
+    }));
   }
 
   private _getColorFields(): IPropertyPaneField<unknown>[] {
